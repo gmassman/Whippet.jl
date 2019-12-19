@@ -6,8 +6,8 @@ function make_fqparser( filename; forcegzip=false )
       to_open = ZlibInflateInputStream( fopen, reset_on_end=true )
    else
       to_open = BufferedInputStream( fopen )
-   end 
-   FASTQ.Reader( to_open, fill_ambiguous=DNA_A ), Requests.ResponseStream{TCPSocket}()
+   end
+   FASTQ.Reader( to_open, fill_ambiguous=DNA_A ), "" #Requests.ResponseStream{TCPSocket}()
 end
 
 # modified for Bio v0.2 with tryread_bool!
@@ -24,19 +24,21 @@ end
 end
 
 function make_http_fqparser( url::String; forcegzip=false )
-   response = Requests.get_streaming(url)
+   error("Not allowed.")
+   #=response = Requests.get_streaming(url)
    if isgzipped( url ) || forcegzip
       zlibstr  = ZlibInflateInputStream( response.buffer, reset_on_end=true )
       fqparser = FASTQ.Reader( zlibstr, fill_ambiguous=DNA_A )
    else
       fqparser = FASTQ.Reader( response.buffer, fill_ambiguous=DNA_A )
    end
-   fqparser, response
+   fqparser, response=#
 end
 
 # Use this version to parse reads from a parser that is reliant on the state
 function read_http_chunk!( chunk, parser, resp; maxtime=24 )
-   i = 1
+   error("Not allowed")
+   #=i = 1
    iobuf      = resp.buffer
    nb_needed  = 8192
    start_mark = iobuf.mark
@@ -59,7 +61,7 @@ function read_http_chunk!( chunk, parser, resp; maxtime=24 )
    while i <= length(chunk)
       pop!(chunk) # clean up if we are at the end
    end
-   parser
+   parser=#
 end
 
 function allocate_chunk( parser; size=10000 )
@@ -71,19 +73,19 @@ function allocate_chunk( parser; size=10000 )
 end
 
 function allocate_fastq_records( size::Int=10000 )
-   chunk = Vector{FASTQRecord}( size )
+   chunk = Vector{FASTQRecord}( undef, size )
    for i in 1:length(chunk)
       chunk[i] = FASTQRecord()
    end
    chunk
 end
 
-function process_reads!( parser, param::AlignParam, lib::GraphLib, quant::GraphLibQuant, 
-                         multi::MultiMapping{SGAlignSingle}, mod::B; 
+function process_reads!( parser, param::AlignParam, lib::GraphLib, quant::GraphLibQuant,
+                         multi::MultiMapping{SGAlignSingle}, mod::B;
                          bufsize=150, sam=false, qualoffset=33,
-                         response=Requests.ResponseStream{TCPSocket}(), 
+                         response="", #Requests.ResponseStream{TCPSocket}(),
                          http=false ) where B <: BiasModel
-  
+
    reads  = allocate_fastq_records( bufsize )
    mean_readlen = 0.0
    total        = 0
@@ -126,12 +128,12 @@ function process_reads!( parser, param::AlignParam, lib::GraphLib, quant::GraphL
 end
 
 
-function process_paired_reads!( fwd_parser, rev_parser, param::AlignParam, 
+function process_paired_reads!( fwd_parser, rev_parser, param::AlignParam,
                                 lib::GraphLib, quant::GraphLibQuant,
-                                multi::MultiMapping{SGAlignPaired}, mod::B; 
+                                multi::MultiMapping{SGAlignPaired}, mod::B;
                                 bufsize=50, sam=false, qualoffset=33,
-                                     response=Requests.ResponseStream{TCPSocket}(), 
-                                mate_response=Requests.ResponseStream{TCPSocket}(), 
+                                     response="", #Requests.ResponseStream{TCPSocket}(),
+                                mate_response="", #Requests.ResponseStream{TCPSocket}(),
                                 http=false ) where B <: BiasModel
 
    fwd_reads  = allocate_fastq_records( bufsize )
@@ -164,11 +166,11 @@ function process_paired_reads!( fwd_parser, rev_parser, param::AlignParam,
                                  paired=true, is_pair_rc=param.is_pair_rc, qualoffset=qualoffset )
             else
                count!( quant, fwd_aln.value[1], rev_aln.value[1], biasval )
-               sam && write_sam( stdbuf, fwd_reads[i], fwd_aln.value[1], lib, 
-                                 paired=true, fwd_mate=true, is_pair_rc=param.is_pair_rc, 
+               sam && write_sam( stdbuf, fwd_reads[i], fwd_aln.value[1], lib,
+                                 paired=true, fwd_mate=true, is_pair_rc=param.is_pair_rc,
                                  qualoffset=qualoffset )
-               sam && write_sam( stdbuf, rev_reads[i], rev_aln.value[1], lib, 
-                                 paired=true, fwd_mate=false, is_pair_rc=param.is_pair_rc, 
+               sam && write_sam( stdbuf, rev_reads[i], rev_aln.value[1], lib,
+                                 paired=true, fwd_mate=false, is_pair_rc=param.is_pair_rc,
                                  qualoffset=qualoffset )
             end
             mapped += 1

@@ -2,22 +2,21 @@ __precompile__()
 
 module Whippet
 
-importall BioSymbols
-importall BioSequences
-importall BioAlignments
-
 import DataStructures: SortedSet
 
-using Base: midpoints
+using StatsBase: midpoints
 using BioSequences
 using BioAlignments
 using BufferedStreams
+using Distributions
 using FMIndexes
 using IntArrays
 using IntervalTrees
 using Libz
-using Distributions
-using Requests
+using LinearAlgebra
+using Nullables
+using Printf
+# using Requests
 
 include("types.jl")
 include("timer.jl")
@@ -27,7 +26,7 @@ include("bam.jl")
 include("refset.jl")
 include("graph.jl")
 include("bias.jl")
-include("edges.jl") 
+include("edges.jl")
 include("index.jl")
 include("record.jl")
 include("align.jl")
